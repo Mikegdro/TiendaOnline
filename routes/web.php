@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,17 +13,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [App\Http\Controllers\AnimalController::class, 'index']);
 
-Route::get('/', function () {
-    return view('welcome');
-});
 
-Route::post('saveImage', function(Request $request) {
-    $file = $request->file('photo');
-    $path = $file->storeAs('public/images/', $file->getClientOriginalName());
-
-    return view('welcome', ['image' => $path]);
-});
