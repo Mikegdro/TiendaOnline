@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Animal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class AnimalController extends Controller {
     const ITEMS_PER_PAGE = 10;
@@ -14,25 +15,38 @@ class AnimalController extends Controller {
     public function index(Request $request) {
 
         //Query
-        $q = $request->input('q', '');
+        $q = $request->input('q', null);
 
         $orderby = $this->getOrder($this->orderByList(), $request->input('orderby'), self::ORDER_BY);
 
         $ordertype = $this->getOrder($this->orderTypeList(), $request->input('ordertype'), self::ORDER_TYPE);
 
-        //Página actual
-        $page = $request->input('page', 1);
-
         $animals = DB::table('animal')
-            ->orderBy($orderby, $ordertype)
-            ->limit(self::ITEMS_PER_PAGE)
-            ->get();
+            ->orderBy($orderby, $ordertype);
 
-        return view('welcome', [
+        if($q) {
+            $animals->where('animal.name', 'like', '%' . $q . '%')
+                ->orWhere('animal.description', 'like', '%' . $q . '%')
+                ->orWhere('animal.age', 'like', '%' . $q . '%')
+                ->orWhere('animal.race', 'like', '%'. $q . '%');
+        }
+
+        $animals = $animals->paginate(self::ITEMS_PER_PAGE);
+
+        $url = $request->fullUrl();
+
+        if($request->input('page')) {
+            $url = explode('&page=', $request->fullUrl());
+            $url = $url[0];
+        }
+
+        $animals->withPath($url);
+
+        return view('animals.index', [
             'animals' => $animals,
             'order' => $this->getOrderUrls($orderby, $ordertype, $q, 'animal.index'),
             'q' => $q,
-            'url' => url('/')
+            'url' => $url,
         ]);
     }
 
@@ -58,9 +72,44 @@ class AnimalController extends Controller {
         return $urls;
     }
 
-    /**
-     *
-    */
+    public function cambiarDatos() {
+        $animales = Animal::all();
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . env("OPENAI_KEY"),
+        ])->get("https://api.openai.com/v1/models");
+
+
+        $modelos = $response->json()['data'];
+        $davinci = '';
+
+        foreach($modelos as $modelo) {
+            if($modelo['id'] == 'text-ada-001') {
+                $davinci = $modelo;
+            }
+        }
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . env("OPENAI_KEY"),
+        ])->post("https://api.openai.com/v1/images/generations", [
+            'prompt' => 'German Shepard',
+            'n' => 1,
+            'size' => "512x512"
+        ]);
+
+        dd($response->json());
+//        $razas = $this->cambiarRaza($animales);
+//
+//        foreach($animales as $animal) {
+//            $raza = fake()->numberBetween(0, count($razas) - 1);
+//
+//            $animal->race = $razas[$raza];
+//            $animal->save();
+//        }
+    }
+
     private function getOrder($orderArray, $order, $default) {
         $value = array_search($order, $orderArray);
 
@@ -70,6 +119,7 @@ class AnimalController extends Controller {
 
         return $value;
     }
+
     private function orderByList() {
         return [
             'animal.name' => 'b1',
@@ -86,11 +136,12 @@ class AnimalController extends Controller {
         ];
     }
 
+    public function show($id) {
+        $animal = Animal::find($id);
 
-
-    public function show(Animal $animal)
-    {
-        //
+        return view('animals.show', [
+            'animal' => $animal
+        ]);
     }
 
     public function edit(Animal $animal)

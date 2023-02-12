@@ -14,5 +14,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [App\Http\Controllers\AnimalController::class, 'index'])->name('animal.index');
-
+Route::get('/cambiarDatos', [\App\Http\Controllers\AnimalController::class, 'cambiarDatos']);
+Route::get('/single/{id}', [App\Http\Controllers\AnimalController::class, 'show'])->name('animal.show');
 
