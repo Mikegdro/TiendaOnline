@@ -73,10 +73,10 @@
     </div>
 
     <style>
-        * {
+        /* * {
             background-color: #1a202c;
             color: #9ca3af;
-        }
+        } */
         .image {
             height: 200px;
             width: 100%;
