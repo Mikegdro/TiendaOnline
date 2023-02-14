@@ -6,11 +6,22 @@ use App\Models\Animal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Route;
 
 class AnimalController extends Controller {
     const ITEMS_PER_PAGE = 10;
     const ORDER_BY = 'animal.name';
     const ORDER_TYPE = 'asc';
+
+    const RAZAS = [
+        'Pastor Alemán',
+        'Bulldog',
+        'Samoyendo',
+        'Chihuahua',
+        'Coli',
+        'Husky',
+        'Bodeguero'
+    ];
 
     public function index(Request $request) {
 
@@ -18,11 +29,21 @@ class AnimalController extends Controller {
         $q = $request->input('q', null);
 
         $orderby = $this->getOrder($this->orderByList(), $request->input('orderby'), self::ORDER_BY);
-
         $ordertype = $this->getOrder($this->orderTypeList(), $request->input('ordertype'), self::ORDER_TYPE);
+        $from = !$request->input('from') ? "0" : $request->input('from');
+        $to = !$request->input('to') ? "15" : $request->input('to');
+        $race = $request->input('race');
 
         $animals = DB::table('animal')
             ->orderBy($orderby, $ordertype);
+
+        if( $from || $to ) {
+            $animals->whereBetween('animal.age', [$from, $to]);
+        }
+
+        if( $race ) {
+            $animals->where('animal.race', 'like', '%' . $race . '%');
+        }
 
         if($q) {
             $animals->where('animal.name', 'like', '%' . $q . '%')
@@ -47,6 +68,7 @@ class AnimalController extends Controller {
             'order' => $this->getOrderUrls($orderby, $ordertype, $q, 'animal.index'),
             'q' => $q,
             'url' => $url,
+            'races' => self::RAZAS,
         ]);
     }
 
@@ -73,7 +95,31 @@ class AnimalController extends Controller {
     }
 
     public function cambiarDatos() {
-        $animales = Animal::all();
+        $animals = Animal::all();
+
+        $this->cambiarRaza($animals);
+
+    }
+
+    private function cambiarRaza($animales) {
+        $length = count(self::RAZAS) - 1;
+
+        foreach($animales as $animal) {
+            $raza = fake()->numberBetween(0, $length);
+            $raza = self::RAZAS[$raza];
+
+            $animal->race = $raza;
+            $animal->save();
+        }
+    }
+
+    /*
+     * Función para hacer una petición a Dall-e y recoger una foto
+     * generada por IA dependiendo de la raza del perro.
+     *
+     * Ya no tiene modelo gratuito y hay que pagar.
+     */
+    private function dalle() {
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
@@ -98,16 +144,6 @@ class AnimalController extends Controller {
             'n' => 1,
             'size' => "512x512"
         ]);
-
-        dd($response->json());
-//        $razas = $this->cambiarRaza($animales);
-//
-//        foreach($animales as $animal) {
-//            $raza = fake()->numberBetween(0, count($razas) - 1);
-//
-//            $animal->race = $razas[$raza];
-//            $animal->save();
-//        }
     }
 
     private function getOrder($orderArray, $order, $default) {

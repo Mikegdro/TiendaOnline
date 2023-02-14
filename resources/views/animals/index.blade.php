@@ -3,18 +3,34 @@
 @section('content')
 
     <div class="relative flex flex-col items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
+        @php
+            $string = '';
 
+            if( app('request')->input('race') ) {
+                $string .= '&race=' . str_replace('+', ' ' , app('request')->input('race'));
+            }
+
+            if( app('request')->input('from') ) {
+                $string .= '&from=' . str_replace('+', ' ' , app('request')->input('from'));
+            }
+
+            if( app('request')->input('to') ) {
+                $string .= '&to=' . str_replace('+', ' ' , app('request')->input('to'));
+            }
+
+
+        @endphp
         <div class="container-fluid">
             <div class="container-fluid d-flex justify-content-evenly py-4">
                 <div class="">
                     Name
-                    <a href="{{ $order['animal.name']['asc'] }}">&#x25b4;</a>
-                    <a href="{{ $order['animal.name']['desc'] }}">&#x25be;</a>
+                    <a href="{{  $order['animal.name']['asc'] . $string }}">&#x25b4;</a>
+                    <a href="{{ $order['animal.name']['desc'] . $string }}">&#x25be;</a>
                 </div>
                 <div class="">
                     Description
-                    <a href="{{ $order['animal.description']['asc'] }}">&#x25b4;</a>
-                    <a href="{{ $order['animal.description']['desc'] }}">&#x25be;</a>
+                    <a href="{{ $order['animal.description']['asc'] . $string }}">&#x25b4;</a>
+                    <a href="{{ $order['animal.description']['desc'] . $string }}">&#x25be;</a>
                 </div>
             </div>
             <div class="accordion pb-5 px-4">
@@ -26,23 +42,42 @@
                     </div>
 
                     <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample" >
-                        <div class="accordion-body d-flex flex-sm-row flex-column align-items-center justify-content-evenly">
 
-                            <div class="d-flex align-items-center">
-                                <label>Age</label>
-                                <input type="range">
-                                <button class="btn btn-primary" href="{{ $order['animal.age']['desc'] }}">
-                                    <i class="bi bi-send"></i>
-                                </button>
-                            </div>
-                            <div class="">
-                                Race
-                                <a href="{{ $order['animal.race']['asc'] }}">&#x25b4;</a>
-                                <a href="{{ $order['animal.race']['desc'] }}">&#x25be;</a>
-                            </div>
+                        <div class="accordion-body ">
+
+                            <form>
+                                <!-- Form Body -->
+                                <div class="d-flex flex-sm-row flex-column align-items-center justify-content-evenly">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <label>Age</label>
+                                        <div class="d-flex align-content-center flex-column flex-sm-row">
+                                            <input type="text" name="from">
+                                            -
+                                            <input type="text" name="to">
+                                        </div>
+                                    </div>
+                                    <div class="">
+                                        Race
+                                        <select id="race" name="race">
+                                            @foreach($races as $race)
+                                                <option value="{{ $race }}">{{ $race }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Form Button -->
+                                <div class="w-full d-flex justify-content-center py-4">
+                                    <button type="submit" class="btn btn-primary py-2 px-12" href="{{ $order['animal.age']['desc'] }}">
+                                        Aplicar Filtros
+                                    </button>
+                                </div>
+                            </form>
                             <!-- Para cambiar datos de todos los objetos -->
-{{--                            <a href="{{ url('cambiarDatos') }}">Cambiar datos</a>--}}
+                            <a href="{{ url('cambiarDatos') }}">Cambiar datos</a>
                         </div>
+
+
                     </div>
                 </div>
             </div>

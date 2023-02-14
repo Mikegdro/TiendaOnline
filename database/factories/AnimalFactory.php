@@ -36,6 +36,16 @@ class AnimalFactory extends Factory {
             ->accept('application/json')
             ->get('https://api.thedogapi.com/v1/images/search');
 
-        return $response->json()[0]['url'];
+        $photo = "";
+
+
+
+        try {
+            $photo = $response->json()[0]['url'];
+        } catch(\Exception $e) {
+
+        }
+
+        return $photo;
     }
 }
