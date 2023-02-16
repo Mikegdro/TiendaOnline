@@ -26,28 +26,28 @@ class AnimalController extends Controller {
     public function index(Request $request) {
 
         //String with filters
-//        $string = $this->getFilterString($request);
-//
-//        $q = $request->input('q', null);
-//
-//        $url = $request->fullUrl();
-//
-//        $orderby = $this->getOrder($this->orderByList(), $request->input('orderby'), self::ORDER_BY);
-//        $ordertype = $this->getOrder($this->orderTypeList(), $request->input('ordertype'), self::ORDER_TYPE);
-//
-//        $animals = getAnimals($request, $q, $orderby, $ordertype);
-//
-//        return view('animals.index', [
-//            'animals' => $animals,
-//            'order' => $this->getOrderUrls($orderby, $ordertype, $q, 'animal.index'),
-//            'q' => $q,
-//            'url' => $url,
-//            'races' => self::RAZAS,
-//            'string' => $string
-//        ]);
+        $string = $this->getFilterString($request);
+
+        $q = $request->input('q', null);
+
+        $url = $request->fullUrl();
+
+        $orderby = $this->getOrder($this->orderByList(), $request->input('orderby'), self::ORDER_BY);
+        $ordertype = $this->getOrder($this->orderTypeList(), $request->input('ordertype'), self::ORDER_TYPE);
+
+        $animals = $this->getAnimals($request, $url, $q, $orderby, $ordertype);
+
+        return view('animals.index', [
+            'animals' => $animals,
+            'order' => $this->getOrderUrls($orderby, $ordertype, $q, 'animal.index'),
+            'q' => $q,
+            'url' => $url,
+            'races' => self::RAZAS,
+            'string' => $string
+        ]);
     }
 
-    private function getAnimals(Request $request, $q, $orderby, $ordertype) {
+    private function getAnimals(Request $request, $url, $q, $orderby, $ordertype) {
         //Query
         $from = !$request->input('from') ? "0" : $request->input('from');
         $to = !$request->input('to') ? "15" : $request->input('to');
