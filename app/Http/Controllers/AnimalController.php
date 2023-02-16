@@ -25,11 +25,30 @@ class AnimalController extends Controller {
 
     public function index(Request $request) {
 
-        //Query
-        $q = $request->input('q', null);
+        //String with filters
+//        $string = $this->getFilterString($request);
+//
+//        $q = $request->input('q', null);
+//
+//        $url = $request->fullUrl();
+//
+//        $orderby = $this->getOrder($this->orderByList(), $request->input('orderby'), self::ORDER_BY);
+//        $ordertype = $this->getOrder($this->orderTypeList(), $request->input('ordertype'), self::ORDER_TYPE);
+//
+//        $animals = getAnimals($request, $q, $orderby, $ordertype);
+//
+//        return view('animals.index', [
+//            'animals' => $animals,
+//            'order' => $this->getOrderUrls($orderby, $ordertype, $q, 'animal.index'),
+//            'q' => $q,
+//            'url' => $url,
+//            'races' => self::RAZAS,
+//            'string' => $string
+//        ]);
+    }
 
-        $orderby = $this->getOrder($this->orderByList(), $request->input('orderby'), self::ORDER_BY);
-        $ordertype = $this->getOrder($this->orderTypeList(), $request->input('ordertype'), self::ORDER_TYPE);
+    private function getAnimals(Request $request, $q, $orderby, $ordertype) {
+        //Query
         $from = !$request->input('from') ? "0" : $request->input('from');
         $to = !$request->input('to') ? "15" : $request->input('to');
         $race = $request->input('race');
@@ -54,8 +73,6 @@ class AnimalController extends Controller {
 
         $animals = $animals->paginate(self::ITEMS_PER_PAGE);
 
-        $url = $request->fullUrl();
-
         if($request->input('page')) {
             $url = explode('&page=', $request->fullUrl());
             $url = $url[0];
@@ -63,13 +80,26 @@ class AnimalController extends Controller {
 
         $animals->withPath($url);
 
-        return view('animals.index', [
-            'animals' => $animals,
-            'order' => $this->getOrderUrls($orderby, $ordertype, $q, 'animal.index'),
-            'q' => $q,
-            'url' => $url,
-            'races' => self::RAZAS,
-        ]);
+        return $animals;
+    }
+
+    private function getFilterString(Request $request) {
+        $string = '';
+
+        if( $request->input('race') ) {
+            $string .= '&race=' . str_replace('+', ' ' , app('request')->input('race'));
+        }
+
+        if( $request->input('from') ) {
+            $string .= '&from=' . str_replace('+', ' ' , app('request')->input('from'));
+        }
+
+        if( $request->input('to') ) {
+            $string .= '&to=' . str_replace('+', ' ' , app('request')->input('to'));
+        }
+
+        return $string;
+
     }
 
     private function getOrderUrls($oBy, $oType, $q, $route) {

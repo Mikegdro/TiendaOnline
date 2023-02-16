@@ -3,23 +3,7 @@
 @section('content')
 
     <div class="relative flex flex-col items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
-        @php
-            $string = '';
 
-            if( app('request')->input('race') ) {
-                $string .= '&race=' . str_replace('+', ' ' , app('request')->input('race'));
-            }
-
-            if( app('request')->input('from') ) {
-                $string .= '&from=' . str_replace('+', ' ' , app('request')->input('from'));
-            }
-
-            if( app('request')->input('to') ) {
-                $string .= '&to=' . str_replace('+', ' ' , app('request')->input('to'));
-            }
-
-
-        @endphp
         <div class="container-fluid">
             <div class="container-fluid d-flex justify-content-evenly py-4">
                 <div class="">
