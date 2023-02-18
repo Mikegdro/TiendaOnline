@@ -7,6 +7,27 @@ defineProps({
     laravelVersion: String,
     phpVersion: String,
 });
+
+let token = null
+
+function api() {
+    let response = fetch('https://dummyjson.com/auth/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            username: 'kminchelle',
+            password: '0lelplR'
+        })
+    })
+    .then( response => response.json())
+    .then( json => {
+        token = json.token
+        console.log(token)
+    })
+}
+
 </script>
 
 <template>
@@ -40,7 +61,7 @@ defineProps({
         </div>
 
         <div class="max-w-7xl mx-auto p-6 lg:p-8">
-            <div class="flex justify-center">
+            <div @click="api()" class="flex justify-center cursor-pointer">
                 <svg
                     viewBox="0 0 62 65"
                     fill="none"
