@@ -11,22 +11,16 @@ module.exports = {
 
     theme: {
         extend: {
-            animation: {
-              torch: 'torch 5s infinite'
-            },
-            keyframes: {
-                torch: {
-                    from: {
-                        backgroundPosition: '-100% 0'
-                    },
-                    to: {
-                        backgroundPosition: '200% 0'
-                    }
-                }
-            },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            fontFamily: {
+                'poppins': ['Poppins', 'sans-serif']
+            },
+            fontSize: {
+                title: `2.2rem;`,
+                paragraph: `1.2rem;`,
+            }
         },
     },
 

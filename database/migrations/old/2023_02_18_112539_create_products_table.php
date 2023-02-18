@@ -16,6 +16,11 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->string('description');
             $table->decimal('price');
+            $table->string('thumbnail');
+            $table->string('brand');
+            $table->decimal('discount');
+            $table->bigInteger('stock');
+            $table->integer('rating');
             $table->timestamps();
 
             // Referencia a las Categorías

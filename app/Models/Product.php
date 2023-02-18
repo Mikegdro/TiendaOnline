@@ -22,7 +22,12 @@ class Product extends Model {
         'name',
         'description',
         'price',
-        'categoryid'
+        'categoryid',
+        'thumbnail',
+        'stock',
+        'brand',
+        'rating',
+        'discount'
     ];
 
     public function getCategory(): BelongsTo {

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -14,8 +15,12 @@ class ProductFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    public function definition(): array
-    {
+    public function definition(): array {
+
+        $categories = Category::all();
+        $category = $categories[fake()->numberBetween(0, count($categories) - 1)];
+
+
         return [
 
         ];
