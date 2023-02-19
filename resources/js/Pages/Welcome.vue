@@ -1,31 +1,73 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import Nav from '@/Components/Nav.vue';
 
+//Estos componentes son los que he usado para hacerlo todo asincrono
+import { ref, onMounted, nextTick } from 'vue';
+
+//Con el scaffolding nos vienen ya definidas las props, pero aquí nos llega la información que nos pasa laravel como parámetros
 defineProps({
     canLogin: Boolean,
     canRegister: Boolean,
     laravelVersion: String,
     phpVersion: String,
-    products: Object
 });
 
-let token = null
+//Variables para cambiar la interfaz
+let products = null;
+const orderType = ref('asc');
+const render = ref(0);
 
-function api() {
-    
+//Hook que salta cuando la aplicación es montada y cargada para recoger datos
+onMounted(async function () {
+    products = await fetch('/api/getData');
+
+    products = await products.json();
+
+    reRender();
+})
+
+//Función para forzar que se renderice de nuevo un componente
+const reRender = () => {
+    render.value += 1;
+}
+
+//Función que llamará de manera asíncrona a la api para pedirle los datos con parámetros de ordenación y filtros
+async function sort(order) {
+
+    if(orderType.value == 'asc') {
+        orderType.value = 'desc'
+    } else {
+        orderType.value = 'asc'
+    }
+
+    let headers = new Headers();
+    headers.append("accept", "application/json");
+    headers.append("Content-type", "application/json");
+
+    let raw = JSON.stringify({
+        "orderby": order,
+        "ordertype": orderType.value
+    });
+
+    let requestOptions = {
+        method: 'POST',
+        headers: headers,
+        body: raw
+    }
+
+    await fetch('/api/order', requestOptions)
+        .then(response => response.json())
+        .then(result => products = result)
+        .catch(error => console.log('Error: ', error));
+
 }
 
 </script>
 
 <template>
     <Head title="Welcome" />
-
-    <Nav>
-        
-    </Nav>
  
-    <!-- <div
+    <div
         class="relative sm:flex sm:justify-center sm:items-center bg-dots-darker bg-center bg-gray-100 dark:bg-dots-lighter dark:bg-gray-900 selection:bg-red-500 selection:text-white"
     >
         <div v-if="canLogin" class="opacity-90 bg-teal-800 w-full sm:fixed sm:top-0 sm:right-0 p-6 text-right">
@@ -53,15 +95,19 @@ function api() {
         </div>
 
         
-    </div> -->
+    </div>
     
     <div class="flex sm:mt-20 mt-5 gap-5 px-5">
         <div class="basis-2/5 bg-teal-200 rounded-lg sm:px-5">
-
+            
         </div>
         
-        <div class="basis-3/5 flex flex-wrap gap-10 justify-evenly">
-            <div v-for="product in products"  class="rounded max-w-xs overflow-hidden shadow-lg">
+        <div :key="render" class="basis-3/5 flex flex-wrap gap-10 justify-evenly">
+            <div class="w-full h-5 bg-slate-600 text-white">
+                <a class="cursor-pointer" v-if=" orderType == 'desc' " @click=" sort('name')"> name &#x25b4;</a>
+                <a class="cursor-pointer" v-else @click=" sort('name')"> name &#x25be;</a>
+            </div>
+            <div v-for="product in products"  class="rounded max-w-xs overflow-hidden shadow-lg hover:opacity-75">
                 <img class="w-full" :src="product.thumbnail" alt="Sunset in the mountains">
                 <div class="px-6 py-4">
                     <div class="font-bold text-xl mb-2">{{ product.name }}</div>
