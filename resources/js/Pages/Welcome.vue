@@ -1,5 +1,6 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+import ShoppingCart from '@/Components/ShoppingCart.vue';
 
 //Estos componentes son los que he usado para hacerlo todo asincrono
 import { ref, onMounted, nextTick } from 'vue';
@@ -16,6 +17,10 @@ defineProps({
 let products = null;
 const orderType = ref('asc');
 const render = ref(0);
+const cart = ref(false);
+const productsInCart = ref([
+
+]);
 
 //Hook que salta cuando la aplicación es montada y cargada para recoger datos
 onMounted(async function () {
@@ -62,11 +67,33 @@ async function sort(order) {
 
 }
 
+function addToCart(product) {
+
+    productsInCart.value.push(product);
+
+    showCart();
+}
+
+function showCart() {
+    cart.value = !cart.value;
+}
+
+function removeItem(product) {
+
+    
+    productsInCart.value.splice(0, productsInCart.value.indexOf(product));
+    console.log(productsInCart.value)
+}
+
 </script>
 
 <template>
     <Head title="Welcome" />
  
+    <ShoppingCart @remove="product => removeItem(product)" :show="cart" @close="showCart()" :products="productsInCart">
+
+    </ShoppingCart>
+
     <div
         class="relative sm:flex sm:justify-center sm:items-center bg-dots-darker bg-center bg-gray-100 dark:bg-dots-lighter dark:bg-gray-900 selection:bg-red-500 selection:text-white"
     >
@@ -103,22 +130,27 @@ async function sort(order) {
         </div>
         
         <div :key="render" class="basis-3/5 flex flex-wrap gap-10 justify-evenly">
-            <div class="w-full h-5 bg-slate-600 text-white">
-                <a class="cursor-pointer" v-if=" orderType == 'desc' " @click=" sort('name')"> name &#x25b4;</a>
-                <a class="cursor-pointer" v-else @click=" sort('name')"> name &#x25be;</a>
+            <div class="w-full h-5 flex justify-evenly content-center items-center py-10 bg-slate-300">
+                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-if=" orderType == 'desc' " @click=" sort('name')"> name &#x25b4;</a>
+                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-else @click=" sort('name')"> name &#x25be;</a>
+
+                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-if=" orderType == 'desc' " @click=" sort('price')"> price &#x25b4;</a>
+                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-else @click=" sort('price')"> price &#x25be;</a>
             </div>
-            <div v-for="product in products"  class="rounded max-w-xs overflow-hidden shadow-lg hover:opacity-75">
+            <div v-for="product in products"  class="rounded max-w-xs overflow-hidden shadow-xl " :key="product.id">
                 <img class="w-full" :src="product.thumbnail" alt="Sunset in the mountains">
                 <div class="px-6 py-4">
                     <div class="font-bold text-xl mb-2">{{ product.name }}</div>
                     <p class="text-gray-700 text-base">
                         {{ product.description }}
                     </p>
+                    <p class="text-xl mt-5 text-center"> {{ product.price }} €</p>
                 </div>
-                <div class="px-6 pt-4 pb-2">
-                    <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">#photography</span>
-                    <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">#travel</span>
-                    <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">#winter</span>
+                <div class="w-full flex justify-center items-center content-center">
+                    <button @click="addToCart(product)"  class="inline-block bg-gray-200 rounded-full px-3 py-1 text-xl font-semibold text-gray-700 mr-2 mb-2">
+                        Add to Cart
+                    </button>
+                    <button class="inline-block bg-gray-200 rounded-full px-3 py-1 text-xl font-semibold text-gray-700 mr-2 mb-2">Buy Now</button>
                 </div>
             </div>
         </div>
