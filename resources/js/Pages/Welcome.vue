@@ -13,16 +13,31 @@ defineProps({
     phpVersion: String,
 });
 
-//Variables para cambiar la interfaz
+//Para los productos
 let products = null;
 const orderBy = ref('name');
 const orderType = ref('asc');
 const render = ref(0);
+
+//Para el carito
 const renderCart = ref(0);
 const cart = ref(false);
 let productsInCart = [];
 const total = ref(0);
+
+//Para los filtros
 const filters = ref([]);
+
+//Para la búsqueda
+const suggestions = ref([
+    {
+        name: "Samsung",
+        price: 1799
+    }
+]);
+
+let search = "";
+
 
 //Hook que salta cuando la aplicación es montada y cargada para recoger datos
 onMounted(async function () {
@@ -38,6 +53,7 @@ const reRender = () => {
     render.value += 1;
 }
 
+//Renderiza de nuevo el carrito
 const refreshCart = () => {
     renderCart.value += 1;
 }
@@ -78,6 +94,7 @@ async function sort(order) {
 
 }
 
+//Añade al carrito
 function addToCart(product) {
 
     productsInCart.push(product);
@@ -89,10 +106,12 @@ function addToCart(product) {
     showCart();
 }
 
+//Muestra el carrito
 function showCart() {
     cart.value = !cart.value;
 }
 
+//Elimina un item del carrito
 function removeItem(product) {
 
     productsInCart.splice(productsInCart.indexOf(product), 1);
@@ -102,9 +121,22 @@ function removeItem(product) {
     refreshCart();
 }
 
+//Aplica los filtros seleccionados
 function applyFilter(event) {
     filters.value.push(event.target.value);
     sort(orderBy.value);
+}
+
+//Recoge las sugerencias con respecto a la búsqueda
+function getSuggestions() {
+    /**
+     * Aquí habría que hacer un fetch para recoger los datos dependiendo del estado de 
+     * la variable @search y pasandole también el orderby actual y el ordertype, pero
+     * esos datos solo se usaría para mostrar sugerencias por lo que se deben de 
+     * almacenar en otra variable
+     * 
+     */
+    
 }
 
 </script>
@@ -149,7 +181,7 @@ function applyFilter(event) {
     <div class="flex sm:mt-20 mt-5 gap-5 px-5">
         <div class="basis-2/5 border-black border-2 rounded-lg sm:px-5 flex flex-col pt-5">
             <h1 class="text-center py-2 text-xl">Brand</h1>
-            <select @change=" applyFilter($event.target.value)" class="">
+            <select @change=" applyFilter($event)" class="">
                 <option>All</option>
                 <option>Apple</option>
                 <option>Samsung</option>
@@ -161,12 +193,22 @@ function applyFilter(event) {
         </div>
         
         <div :key="render" class="basis-3/5 flex flex-wrap gap-10 justify-evenly">
+            <div>
+                <h1 class="text-xl text-center">Search</h1>
+                <input v-model="search" @input="getSuggestions()" type="text" class="mt-3 border-b-slate-500 border-b-2 border-t-0 border-l-0 border-r-0 focus:ring-0">
+                <div v-for="suggestion in suggestions" class="text-center mt-5 border-slate-800 border-2 rounded-full p-2 cursor-pointer">
+                    <p>{{ suggestion.name }} &nbsp;-&nbsp; {{ suggestion.price }} €</p>
+                </div>
+            </div>
+            
+            
             <div class="w-full h-5 flex justify-evenly content-center items-center py-10 rounded-lg">
                 <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-if=" orderType == 'desc' " @click=" sort('name')"> name &#x25b4;</a>
                 <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-else @click=" sort('name')"> name &#x25be;</a>
 
                 <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-if=" orderType == 'desc' " @click=" sort('price')"> price &#x25b4;</a>
                 <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-else @click=" sort('price')"> price &#x25be;</a>
+
             </div>
             <div v-for="product in products"  class="rounded max-w-xs overflow-hidden shadow-xl " :key="product.id">
                 <img class="w-full" :src="product.thumbnail" alt="Sunset in the mountains">
