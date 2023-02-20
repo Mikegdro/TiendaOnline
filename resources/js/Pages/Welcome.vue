@@ -15,12 +15,14 @@ defineProps({
 
 //Variables para cambiar la interfaz
 let products = null;
+const orderBy = ref('name');
 const orderType = ref('asc');
 const render = ref(0);
+const renderCart = ref(0);
 const cart = ref(false);
-const productsInCart = ref([
-
-]);
+let productsInCart = [];
+const total = ref(0);
+const filters = ref([]);
 
 //Hook que salta cuando la aplicación es montada y cargada para recoger datos
 onMounted(async function () {
@@ -36,22 +38,29 @@ const reRender = () => {
     render.value += 1;
 }
 
+const refreshCart = () => {
+    renderCart.value += 1;
+}
+
 //Función que llamará de manera asíncrona a la api para pedirle los datos con parámetros de ordenación y filtros
 async function sort(order) {
 
-    if(orderType.value == 'asc') {
+    if( orderType.value == 'asc' ) {
         orderType.value = 'desc'
     } else {
         orderType.value = 'asc'
     }
+
+    orderBy.value = order;
 
     let headers = new Headers();
     headers.append("accept", "application/json");
     headers.append("Content-type", "application/json");
 
     let raw = JSON.stringify({
-        "orderby": order,
-        "ordertype": orderType.value
+        orderby: order,
+        ordertype: orderType.value,
+        filters: filters.value
     });
 
     let requestOptions = {
@@ -65,11 +74,17 @@ async function sort(order) {
         .then(result => products = result)
         .catch(error => console.log('Error: ', error));
 
+    console.log(products)
+
 }
 
 function addToCart(product) {
 
-    productsInCart.value.push(product);
+    productsInCart.push(product);
+
+    let qty = parseFloat(product.price)
+
+    total.value += qty;
 
     showCart();
 }
@@ -80,9 +95,16 @@ function showCart() {
 
 function removeItem(product) {
 
-    
-    productsInCart.value.splice(0, productsInCart.value.indexOf(product));
-    console.log(productsInCart.value)
+    productsInCart.splice(productsInCart.indexOf(product), 1);
+
+    total.value -= parseFloat(product.price);
+
+    refreshCart();
+}
+
+function applyFilter(event) {
+    filters.value.push(event.target.value);
+    sort(orderBy.value);
 }
 
 </script>
@@ -90,7 +112,7 @@ function removeItem(product) {
 <template>
     <Head title="Welcome" />
  
-    <ShoppingCart @remove="product => removeItem(product)" :show="cart" @close="showCart()" :products="productsInCart">
+    <ShoppingCart :key="renderCart" @remove="product => removeItem(product)" :show="cart" @close="showCart()" :products="productsInCart" :amount="total">
 
     </ShoppingCart>
 
@@ -125,12 +147,21 @@ function removeItem(product) {
     </div>
     
     <div class="flex sm:mt-20 mt-5 gap-5 px-5">
-        <div class="basis-2/5 bg-teal-200 rounded-lg sm:px-5">
+        <div class="basis-2/5 border-black border-2 rounded-lg sm:px-5 flex flex-col pt-5">
+            <h1 class="text-center py-2 text-xl">Brand</h1>
+            <select @change=" applyFilter($event.target.value)" class="">
+                <option>All</option>
+                <option>Apple</option>
+                <option>Samsung</option>
+                <option>Huawei</option>
+                <option>HP</option>
+                <option>Infinix</option>
+            </select>
             
         </div>
         
         <div :key="render" class="basis-3/5 flex flex-wrap gap-10 justify-evenly">
-            <div class="w-full h-5 flex justify-evenly content-center items-center py-10 bg-slate-300">
+            <div class="w-full h-5 flex justify-evenly content-center items-center py-10 rounded-lg">
                 <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-if=" orderType == 'desc' " @click=" sort('name')"> name &#x25b4;</a>
                 <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-else @click=" sort('name')"> name &#x25be;</a>
 

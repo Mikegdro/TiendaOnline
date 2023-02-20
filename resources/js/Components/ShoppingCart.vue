@@ -55,9 +55,9 @@
                     </div>
   
                     <div class="border-t border-gray-200 py-6 px-4 sm:px-6">
-                      <div class="flex justify-between text-base font-medium text-gray-900">
+                      <div class="flex justify-between text-base font-medium text-gray-900" :key="total">
                         <p>Subtotal</p>
-                        <p>$262.00</p>
+                        <p>{{ amount }}€</p>
                       </div>
                       <p class="mt-0.5 text-sm text-gray-500">Shipping and taxes calculated at checkout.</p>
                       <div class="mt-6">
@@ -84,13 +84,15 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue'
-  import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-  import { XMarkIcon } from '@heroicons/vue/24/outline'
-  
-  defineProps({
-    products: Array
-  })
-  
-  const open = ref(true)
+    import { ref } from 'vue'
+    import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
+    import { XMarkIcon } from '@heroicons/vue/24/outline'
+    
+
+    defineProps({
+      products: Array,
+      amount: Number,
+    })
+    
+    const open = ref(true)
   </script>

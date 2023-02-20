@@ -4,6 +4,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use function PHPUnit\Framework\isEmpty;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/order', function(Request $request) {
 
     $products = '';
+
+
+    if( $request->has('filters') ){
+        return $request->input('filters');
+    }
 
     try {
         $products = DB::table('products')
