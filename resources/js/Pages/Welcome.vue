@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 
 import ShoppingCart from '@/Components/ShoppingCart.vue';
 import ComboBox from '@/Components/ComboBox.vue';
+import Pagination from '@/Components/Pagination.vue';
 
 //Estos componentes son los que he usado para hacerlo todo asincrono
 import { ref, onMounted, nextTick } from 'vue';
@@ -32,9 +33,34 @@ const total = ref(0);
 //Para los filtros
 const filters = ref([]);
 
+//Para las páginas
+const pages = ref(0);
+const currentPage = ref(1);
+let totalItems = 0;
+let itemsPerPage = 6;
+let productsInPage = [];
+
+
+function updatePages(event) {
+    
+    if( itemsPerPage <= 0 ) {
+        itemsPerPage = 1;
+    }
+
+    pages.value += 1;
+
+    getProductsInPage()
+    reRender();
+}
+
+function changePages(page) {
+    currentPage.value = page;
+    updatePages();
+}
+
 //Hook que salta cuando la aplicación es montada y cargada para recoger datos
 onMounted(async function () {
-    sort('name');
+    await sort('name');
 })
 
 //Función para forzar que se renderice de nuevo un componente
@@ -64,6 +90,9 @@ async function sort(order, type) {
         filters: filters.value
     }).then(prods => products = prods.data)
 
+    totalItems = products.length;
+
+    updatePages();
     reRender();
 }
 
@@ -115,6 +144,20 @@ function applyFilter(event) {
     sort();
 }
 
+function getProductsInPage() {
+
+    productsInPage = [];
+
+    let i = currentPage.value == 1 ? 0 : (currentPage.value - 1) * itemsPerPage;
+
+    for(i; i <= currentPage.value * (itemsPerPage - 1); i++) {
+        if( products[i] ) {
+            productsInPage.push(products[i]);
+        }
+        
+    }
+    
+}
 
 </script>
 
@@ -168,7 +211,7 @@ function applyFilter(event) {
 
             <div>
                 <h1 class="text-center text-lg">Search</h1>
-                <ComboBox />
+                <ComboBox  />
             </div>
             
             
@@ -182,7 +225,7 @@ function applyFilter(event) {
 
             </div>
 
-            <div v-for="product in products"  class="rounded max-w-xs overflow-hidden shadow-xl " :key="product.id">
+            <div v-for="product in productsInPage">
                 <img class="w-full" :src="product.thumbnail" alt="Sunset in the mountains">
                 <div class="px-6 py-4">
                     <div class="font-bold text-xl mb-2">{{ product.name }}</div>
@@ -198,6 +241,13 @@ function applyFilter(event) {
                     <button class="inline-block bg-gray-200 rounded-full px-3 py-1 text-xl font-semibold text-gray-700 mr-2 mb-2">Buy Now</button>
                 </div>
             </div>
+
+
+            <Pagination @page="page => changePages(page)" :items-per-page="itemsPerPage" v-model="currentPage" :total-items="totalItems" :key="pages" />
+
+            <br/>
+
+            <input type="number" v-model="itemsPerPage" :key="pages" min="1" v-bind:max="totalItems" @change="updatePages()"  class="w-1/2 text-center" />
         </div>
         
     </div>
