@@ -22,10 +22,6 @@
         emit('page', page)
     }
 
-    const onClickHandler = (page) => {
-      currentPage.value = page;
-    };
-    
   </script>
   
   <style>

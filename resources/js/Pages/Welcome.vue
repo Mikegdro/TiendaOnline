@@ -41,15 +41,17 @@ let itemsPerPage = 6;
 let productsInPage = [];
 
 
-function updatePages(event) {
+function updatePages() {
     
     if( itemsPerPage <= 0 ) {
         itemsPerPage = 1;
+    } else if ( itemsPerPage > totalItems ) {
+        itemsPerPage = totalItems;
     }
 
-    pages.value += 1;
-
     getProductsInPage()
+
+    pages.value += 1;
     reRender();
 }
 
@@ -150,13 +152,14 @@ function getProductsInPage() {
 
     let i = currentPage.value == 1 ? 0 : (currentPage.value - 1) * itemsPerPage;
 
-    for(i; i <= currentPage.value * (itemsPerPage - 1); i++) {
-        if( products[i] ) {
-            productsInPage.push(products[i]);
-        }
-        
-    }
-    
+    //TODO
+
+    // for(i; (itemsPerPage - 1) * currentPage.value; i ++) {
+    //     if( products[i] ) {
+    //         productsInPage.push(products[i]);
+    //     }
+    // }
+
 }
 
 </script>
