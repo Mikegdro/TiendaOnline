@@ -21,36 +21,3 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/order', function(Request $request) {
-
-    $products = '';
-
-
-    if( $request->has('filters') ){
-        return $request->input('filters');
-    }
-
-    try {
-        $products = DB::table('products')
-            ->orderBy($request->input('orderby'), $request->input('ordertype'))
-            ->get();
-    } catch (\Exception $e) {
-        $products = $e;
-    }
-
-    return $products;
-});
-
-Route::get('/getData', function(Request $request) {
-
-    $products = '';
-
-    try {
-        $products = DB::table('products')
-            ->get();
-    } catch (\Exception $e) {
-        $products = $e;
-    }
-
-    return $products;
-});

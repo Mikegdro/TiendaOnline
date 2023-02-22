@@ -1,9 +1,12 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+
 import ShoppingCart from '@/Components/ShoppingCart.vue';
+import ComboBox from '@/Components/ComboBox.vue';
 
 //Estos componentes son los que he usado para hacerlo todo asincrono
 import { ref, onMounted, nextTick } from 'vue';
+import axios from 'axios';
 
 //Con el scaffolding nos vienen ya definidas las props, pero aquí nos llega la información que nos pasa laravel como parámetros
 defineProps({
@@ -11,6 +14,7 @@ defineProps({
     canRegister: Boolean,
     laravelVersion: String,
     phpVersion: String,
+    csrfToken: String,
 });
 
 //Para los productos
@@ -28,24 +32,9 @@ const total = ref(0);
 //Para los filtros
 const filters = ref([]);
 
-//Para la búsqueda
-const suggestions = ref([
-    {
-        name: "Samsung",
-        price: 1799
-    }
-]);
-
-let search = "";
-
-
 //Hook que salta cuando la aplicación es montada y cargada para recoger datos
 onMounted(async function () {
-    products = await fetch('/api/getData');
-
-    products = await products.json();
-
-    reRender();
+    sort('name');
 })
 
 //Función para forzar que se renderice de nuevo un componente
@@ -59,39 +48,23 @@ const refreshCart = () => {
 }
 
 //Función que llamará de manera asíncrona a la api para pedirle los datos con parámetros de ordenación y filtros
-async function sort(order) {
+async function sort(order, type) {
 
-    if( orderType.value == 'asc' ) {
-        orderType.value = 'desc'
-    } else {
-        orderType.value = 'asc'
+    if( order ) {
+        orderBy.value = order;
+    } 
+
+    if( type ) {
+        orderType.value = type;
     }
 
-    orderBy.value = order;
-
-    let headers = new Headers();
-    headers.append("accept", "application/json");
-    headers.append("Content-type", "application/json");
-
-    let raw = JSON.stringify({
-        orderby: order,
+    await axios.post('/getData', {
+        orderby: orderBy.value,
         ordertype: orderType.value,
         filters: filters.value
-    });
+    }).then(prods => products = prods.data)
 
-    let requestOptions = {
-        method: 'POST',
-        headers: headers,
-        body: raw
-    }
-
-    await fetch('/api/order', requestOptions)
-        .then(response => response.json())
-        .then(result => products = result)
-        .catch(error => console.log('Error: ', error));
-
-    console.log(products)
-
+    reRender();
 }
 
 //Añade al carrito
@@ -113,7 +86,6 @@ function showCart() {
 
 //Elimina un item del carrito
 function removeItem(product) {
-
     productsInCart.splice(productsInCart.indexOf(product), 1);
 
     total.value -= parseFloat(product.price);
@@ -123,21 +95,26 @@ function removeItem(product) {
 
 //Aplica los filtros seleccionados
 function applyFilter(event) {
-    filters.value.push(event.target.value);
-    sort(orderBy.value);
+    //Cogemos el tipo de elemento y el valor
+    let type = event.target.id;
+    let value = event.target.value;
+
+    //Comprobamos si hay algun filtro del mismo tipo
+    let hasFilter = filters.value.filter(filter => filter.type == type);
+
+    //Si hay algun filtro del mismo tipo, se borra e intercarmbia
+    if( hasFilter.length > 0 ) {
+        console.log("Eliminando filtro");
+        filters.value.splice(filters.value.indexOf(hasFilter), 1);
+    }
+
+    //Añadimos el filtro nuevo
+    filters.value.push({type, value});
+
+    //Llamamos a la función que ejecuta de nuevo la petición para pedir datos, ahora con filtros
+    sort();
 }
 
-//Recoge las sugerencias con respecto a la búsqueda
-function getSuggestions() {
-    /**
-     * Aquí habría que hacer un fetch para recoger los datos dependiendo del estado de 
-     * la variable @search y pasandole también el orderby actual y el ordertype, pero
-     * esos datos solo se usaría para mostrar sugerencias por lo que se deben de 
-     * almacenar en otra variable
-     * 
-     */
-    
-}
 
 </script>
 
@@ -148,40 +125,35 @@ function getSuggestions() {
 
     </ShoppingCart>
 
-    <div
-        class="relative sm:flex sm:justify-center sm:items-center bg-dots-darker bg-center bg-gray-100 dark:bg-dots-lighter dark:bg-gray-900 selection:bg-red-500 selection:text-white"
-    >
-        <div v-if="canLogin" class="opacity-90 bg-teal-800 w-full sm:fixed sm:top-0 sm:right-0 p-6 text-right">
+    <div v-if="canLogin" class="opacity-90 bg-gray-800 w-full sm:fixed sm:top-0 sm:right-0 p-6 text-right">
+        <Link
+            v-if="$page.props.auth.user"
+            :href="route('dashboard')"
+            class="font-semibold text-white hover:text-gray-900 dark:text-white dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
+            >Dashboard</Link
+        >
+
+        <template v-else>
             <Link
-                v-if="$page.props.auth.user"
-                :href="route('dashboard')"
-                class="font-semibold text-white hover:text-gray-900 dark:text-white dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
-                >Dashboard</Link
+                :href="route('login')"
+                class="font-semibold text-white hover:text-gray-400 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
+                >Log in</Link
             >
 
-            <template v-else>
-                <Link
-                    :href="route('login')"
-                    class="font-semibold text-white hover:text-gray-400 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
-                    >Log in</Link
-                >
-
-                <Link
-                    v-if="canRegister"
-                    :href="route('register')"
-                    class="ml-4 font-semibold text-white hover:text-gray-400 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
-                    >Register</Link
-                >
-            </template>
-        </div>
-
-        
+            <Link
+                v-if="canRegister"
+                :href="route('register')"
+                class="ml-4 font-semibold text-white hover:text-gray-400 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
+                >Register</Link
+            >
+        </template>
     </div>
+
     
     <div class="flex sm:mt-20 mt-5 gap-5 px-5">
-        <div class="basis-2/5 border-black border-2 rounded-lg sm:px-5 flex flex-col pt-5">
-            <h1 class="text-center py-2 text-xl">Brand</h1>
-            <select @change=" applyFilter($event)" class="">
+        <div class="basis-2/5 border-black border sm:px-5 flex flex-col pt-5">
+            <h1 class="text-center py-2 text-xl">Brands</h1>
+            <select id="brands" @change=" applyFilter($event)" class="mx-2">
                 <option>All</option>
                 <option>Apple</option>
                 <option>Samsung</option>
@@ -193,23 +165,23 @@ function getSuggestions() {
         </div>
         
         <div :key="render" class="basis-3/5 flex flex-wrap gap-10 justify-evenly">
+
             <div>
-                <h1 class="text-xl text-center">Search</h1>
-                <input v-model="search" @input="getSuggestions()" type="text" class="mt-3 border-b-slate-500 border-b-2 border-t-0 border-l-0 border-r-0 focus:ring-0">
-                <div v-for="suggestion in suggestions" class="text-center mt-5 border-slate-800 border-2 rounded-full p-2 cursor-pointer">
-                    <p>{{ suggestion.name }} &nbsp;-&nbsp; {{ suggestion.price }} €</p>
-                </div>
+                <h1 class="text-center text-lg">Search</h1>
+                <ComboBox />
             </div>
             
             
             <div class="w-full h-5 flex justify-evenly content-center items-center py-10 rounded-lg">
-                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-if=" orderType == 'desc' " @click=" sort('name')"> name &#x25b4;</a>
-                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-else @click=" sort('name')"> name &#x25be;</a>
 
-                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-if=" orderType == 'desc' " @click=" sort('price')"> price &#x25b4;</a>
-                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-else @click=" sort('price')"> price &#x25be;</a>
+                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-if=" orderType == 'desc' " @click=" sort('name', 'asc')"> name &#x25b4;</a>
+                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-else @click=" sort('name', 'desc')"> name &#x25be;</a>
+
+                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-if=" orderType == 'desc' " @click=" sort('price', 'asc')"> price &#x25b4;</a>
+                <a class="cursor-pointer border-2 border-solid border-black px-5 rounded-full" v-else @click=" sort('price', 'desc')"> price &#x25be;</a>
 
             </div>
+
             <div v-for="product in products"  class="rounded max-w-xs overflow-hidden shadow-xl " :key="product.id">
                 <img class="w-full" :src="product.thumbnail" alt="Sunset in the mountains">
                 <div class="px-6 py-4">

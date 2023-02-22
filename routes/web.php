@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
-use App\Models\Category;
-use App\Models\Product;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,10 +30,7 @@ Route::get('/', function () {
     ]);
 });
 
- Route::get('/pruebas', function () {
-
-
- });
+Route::post('/getData', [ProductController::class, 'data']);
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
