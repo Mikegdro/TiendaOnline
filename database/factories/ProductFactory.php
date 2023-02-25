@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Http;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Product>
@@ -17,38 +18,13 @@ class ProductFactory extends Factory
      */
     public function definition(): array {
 
-        $categories = Category::all();
-        $category = $categories[fake()->numberBetween(0, count($categories) - 1)];
+        $key = env("OPEN_API_KEY");
 
-         $category = $categories[fake()->numberBetween(0, count($categories) - 1)];
-         $name = $category->name;
+        $categories = Http::withHeaders([
+          'X-BLOBR-KEY' => $key
+        ])->get('https://apis.blobr.app/f9g3z21kiqc0hz9s/en/v3/category/all');
 
-         $response = Http::get('https://dummyjson.com/products?q=laptop');
-         $response = $response->json();
-
-         $errors = array();
-
-//         foreach($response['products'] as $prod) {
-//              $product = new Product();
-//              $product->name = $prod['title'];
-//              $product->description = $prod['description'];
-//              $product->price = $prod['price'];
-//              $product->discount = $prod['discountPercentage'];
-//              $product->rating = $prod['rating'];
-//              $product->stock = $prod['stock'];
-//              $product->brand = $prod['brand'];
-//              $product->thumbnail = $prod['images'][0];
-//              $product->categoryid = $category->id;
-//
-//              try {
-//                  $product->save();
-//              } catch (\Exception $e) {
-//                  array_push($errors, $e);
-//              }
-//
-//         }
-
-        // dd($errors);
+        dd($categories->body());
 
         return [
 

@@ -16,6 +16,7 @@ defineProps({
     laravelVersion: String,
     phpVersion: String,
     csrfToken: String,
+    extrainfo: Object,
 });
 
 //Para los productos
@@ -37,7 +38,7 @@ const filters = ref([]);
 const pages = ref(0);
 const currentPage = ref(1);
 let totalItems = 0;
-let itemsPerPage = 6;
+let itemsPerPage = 5;
 let productsInPage = [];
 
 
@@ -92,7 +93,9 @@ async function sort(order, type) {
         filters: filters.value
     }).then(prods => products = prods.data)
 
-    totalItems = products.length;
+
+
+    totalItems = products.length > 0 ? products.length : 1;
 
     updatePages();
     reRender();
@@ -154,24 +157,35 @@ function getProductsInPage() {
 
     //TODO
 
-    // for(i; (itemsPerPage - 1) * currentPage.value; i ++) {
-    //     if( products[i] ) {
-    //         productsInPage.push(products[i]);
-    //     }
-    // }
+    //El numero del final de la página es currentPage * itemsPerPage
+    //El numero del principio, es el final de la página anterior más 1 => (currentPage - 1) * itemsPerPage + 1
+    
+    for(i; i < itemsPerPage * currentPage.value; i ++) {
+        if( products[i] ) {
+            productsInPage.push(products[i]);
+        }
+    }
 
 }
 
+function test() {
+    axios.get("/seed")
+        .then(res => console.log(res))
+}
 </script>
 
 <template>
     <Head title="Welcome" />
- 
+
     <ShoppingCart :key="renderCart" @remove="product => removeItem(product)" :show="cart" @close="showCart()" :products="productsInCart" :amount="total">
 
     </ShoppingCart>
 
     <div v-if="canLogin" class="opacity-90 bg-gray-800 w-full sm:fixed sm:top-0 sm:right-0 p-6 text-right">
+        <!-- <Link
+                :href="route('test')"
+            >Test</Link> -->
+        <!-- <div @click="test()" class="hover:cursor-pointer text-white text-xl">Test</div> -->
         <Link
             v-if="$page.props.auth.user"
             :href="route('dashboard')"
@@ -192,7 +206,14 @@ function getProductsInPage() {
                 class="ml-4 font-semibold text-white hover:text-gray-400 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
                 >Register</Link
             >
+
+            
         </template>
+        
+    </div>
+
+    <div v-if="extrainfo">
+        {{ extrainfo }}
     </div>
 
     
