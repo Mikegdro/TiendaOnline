@@ -28,7 +28,9 @@ Route::get('/', function () {
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
+        'user' => Auth::user() ? Auth::user() : ''
     ]);
+
 })->name('home');
 
 Route::get('/seed', [ProductController::class, 'seedDB']);

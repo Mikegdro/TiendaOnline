@@ -16,18 +16,22 @@ defineProps({
     canRegister: Boolean,
     laravelVersion: String,
     phpVersion: String,
-    csrfToken: String,
-    extrainfo: Object,
+    user:  Object || String
 });
 
 //Para los productos
 let products = null;
 const orderBy = ref('name');
 const orderType = ref('asc');
+const search = ref('');
+
+//Re-render del bucle
 const render = ref(0);
 
-//Para el carito
+//Re-render del carrito
 const renderCart = ref(0);
+
+//Variables del carrito
 const cart = ref(false);
 let productsInCart = [];
 const total = ref(0);
@@ -47,8 +51,6 @@ function updatePages() {
     
     if( itemsPerPage <= 0 ) {
         itemsPerPage = 1;
-    } else if ( itemsPerPage > totalItems ) {
-        itemsPerPage = totalItems;
     }
 
     getProductsInPage()
@@ -86,10 +88,9 @@ async function sort(order, type) {
     await axios.post('/getData', {
         orderby: orderBy.value,
         ordertype: orderType.value,
-        filters: filters.value
+        filters: filters.value,
+        search: search.value
     }).then(prods => products = prods.data)
-
-
 
     totalItems = products.length > 0 ? products.length : 1;
 
@@ -123,10 +124,7 @@ function showCart() {
 //Elimina un item del carrito
 function removeItem(product) {
     productsInCart.splice(productsInCart.indexOf(product), 1);
-
     total.value -= parseFloat(product.price);
-
-    // refreshCart();
 }
 
 //Aplica los filtros seleccionados
@@ -157,17 +155,17 @@ function getProductsInPage() {
 
     let i = currentPage.value == 1 ? 0 : (currentPage.value - 1) * itemsPerPage;
 
-    //TODO
-
-    //El numero del final de la página es currentPage * itemsPerPage
-    //El numero del principio, es el final de la página anterior más 1 => (currentPage - 1) * itemsPerPage + 1
-    
     for(i; i < itemsPerPage * currentPage.value; i ++) {
         if( products[i] ) {
             productsInPage.push(products[i]);
         }
     }
 
+}
+
+async function searchItems(q) {
+    search.value = q;
+    await sort();
 }
 
 function test() {
@@ -178,25 +176,65 @@ function test() {
 
 <template>
     <Head title="Welcome" />
+    
+    <div class="nav font-poppins text-white bg-zinc-600 h-16 flex justify-center items-center content-center gap-5">
+
+        <div class="flex-1">
+
+        </div>
+
+        <div class="flex-1 flex justify-center gap-5">
+            <Link 
+                href="/"
+                >
+                Home
+            </Link>
+            <Link 
+                v-if="canLogin && !user.name"
+                href="/login"
+                >
+                Login
+            </Link>
+            <Link
+                v-if="user.isAdmin"
+                href="/dashboard"
+                >
+                Dashboard
+            </Link>
+        </div>
+
+        <div v-if="user" class="flex flex-1 items-center justify-end px-5">
+            <a href="#" class="flex items-center gap-x-2">
+                <img class="object-cover rounded-full h-7 w-7" src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&h=634&q=80" alt="avatar" />
+                <span class="text-sm font-medium dark:text-gray-200">{{ user.name }}</span>
+            </a>
+            
+            <Link href="/logout" method="post" as="button">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                </svg>
+            </Link>
+        </div>
+    </div>
 
     <ShoppingCart :key="renderCart" @remove="product => removeItem(product)" :show="cart" @close="showCart()" :products="productsInCart" :amount="total">
 
     </ShoppingCart>
     
-    <div v-if="extrainfo">
+    <!-- <div v-if="extrainfo">
         {{ extrainfo }}
-    </div>
+    </div> -->
 
-    <div class="hero">
+    <!-- <div class="hero">
 
-    </div>
+    </div> -->
     
     <div class="flex h-full overflow-x-hidden">
-        <Sidebar>
+        <Sidebar :user="user" @search="search => searchItems(search)">
         
         </Sidebar>
         
-        <div class="flex flex-col h-screen justify-evenly px-12 overflow-x-hidden box-border">
+        <div class="flex flex-col h-screen justify-evenly overflow-x-hidden box-border">
             
             <div class="w-full h-5 flex justify-evenly content-center items-center py-10 rounded-lg">
 
@@ -208,8 +246,8 @@ function test() {
 
             </div>
 
-            <div class="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div v-for="product in productsInPage" :key="render" class="flex flex-col bg-gray-200 ">
+            <div :key="render" class="h-full grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 overflow-y-scroll py-9 px-9">
+                <div v-for="product in productsInPage"  class="flex flex-col bg-gray-200 shadow-xl shadow-zinc-400 hover:scale-110 transition-all ease-in-out">
                     <img :src="product.thumbnail">
                     <div class="px-6 py-4 flex flex-col justify-evenly items-center content-center h-full">
                         <div class="font-bold text-xl mb-2">{{ product.name }}</div>
@@ -218,11 +256,11 @@ function test() {
                         </p>
                         <p class=" mt-5 text-center"> {{ product.price }} €</p>
                     </div>
-                    <div class="w-full flex justify-center items-center content-center">
-                        <button @click="addToCart(product)"  class="inline-block bg-gray-400 rounded-full px-3 py-1 font-semibold text-white mr-2 mb-2">
+                    <div class="w-full flex gap-5 justify-center items-center content-center">
+                        <button @click="addToCart(product)"  class="bg-zinc-500 rounded-lg px-5 py-1 font-semibold text-white mb-5 hover:bg-zinc-400 transition-all ease-in-out">
                             Add to Cart
                         </button>
-                        <button class="inline-block bg-gray-400 rounded-full px-3 py-1 font-semibold text-white mr-2 mb-2">Buy Now</button>
+                        <button class="bg-zinc-500 rounded-lg px-5 py-1 font-semibold text-white mb-5 hover:bg-zinc-400 transition-all ease-in-out">Buy Now</button>
                     </div>
                 </div>
             </div>
@@ -230,13 +268,13 @@ function test() {
         </div>
         
     </div>
-    <Pagination class="w-full my-14 mx-auto flex justify-center" @page="page => changePages(page)" :items-per-page="itemsPerPage" v-model="currentPage" :total-items="totalItems" :key="pages" />
+    <div class="bg-zinc-600">
+        <Pagination class="w-full mt-9 mb-9 mx-auto flex justify-center" @page="page => changePages(page)" :items-per-page="itemsPerPage" v-model="currentPage" :total-items="totalItems" :key="pages" />
 
-    <br/>
-
-    <div class="flex justify-center">
-        <label for="pages">Items Per Page:</label>
-        <input type="number" id="pages" v-model="itemsPerPage" :key="pages" min="1" v-bind:max="totalItems" @change="updatePages()"  class="text-center w-64 mb-4" />
+        <div class="flex flex-col items-center gap-3 justify-center">
+            <label for="pages" class="text-white">Items Per Page</label>
+            <input type="number" id="pages" v-model="itemsPerPage" :key="pages" min="1" v-bind:max="totalItems" @change="updatePages()"  class="text-center w-64 mb-4" />
+        </div>
     </div>
 </template>
 

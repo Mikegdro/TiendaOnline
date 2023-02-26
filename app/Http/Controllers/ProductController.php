@@ -22,6 +22,7 @@ class ProductController extends Controller {
         try {
             $products = DB::table('products')
                 ->orderBy($request->input('orderby'), $request->input('ordertype'))
+                ->where('products.name', 'like', '%' . $request->input('search') . '%')
                 ->get();
         } catch (\Exception $e) {
             $products = $e;

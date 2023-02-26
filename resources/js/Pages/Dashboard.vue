@@ -4,11 +4,9 @@ import { Head } from '@inertiajs/vue3';
 import { ref, onMounted, nextTick } from 'vue';
 import axios from 'axios';
 
-
 defineProps([
     "user"
 ])
-
 
 //Thumbnail del usuario
 const photo = ref();

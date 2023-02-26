@@ -92,6 +92,7 @@
     defineProps({
       products: Array,
       amount: Number,
+      total: Number
     })
     
     const open = ref(true)
